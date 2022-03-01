@@ -11,11 +11,12 @@ except OverflowError:
     maxInt = int(maxInt/10)
 
 
-def create_graph_batch_csv(path, add_ref=False):
+def create_graph_batch_csv(path,max_edges=None, add_ref=False):
     df = load_tsv_to_df(path)
-    nodes, edges = extract_nodes_and_edges(df, add_ref=add_ref)
-    write_to_csv(nodes, ['title'], 'data/csv_to_db/Article.csv')
-    write_to_csv(edges, ['src_Article', 'dst_Article', 'weight', 'reference'], 'data/csv_to_db/MovedTo.csv')
+    nodes, edges = extract_nodes_and_edges(df, max_edges=max_edges, add_ref=add_ref)
+    write_to_csv(nodes, ['title'], 'data/csv_to_db/2015_01_full/Article.csv')
+    write_to_csv(edges, ['src_Article', 'dst_Article', 'weight', 'reference'],
+                 'data/csv_to_db/2015_01_full/MovedTo.csv')
 
 
 def load_tsv_to_df(path):
@@ -28,7 +29,7 @@ def load_tsv_to_df(path):
     return graph_data_frame
 
 
-def extract_nodes_and_edges(graph_df, add_ref=False):
+def extract_nodes_and_edges(graph_df, max_edges=None, add_ref=False):
     node_set = set()
     moved_to_edges_set = set()
     reference_dict = dict() if add_ref else False
@@ -38,6 +39,8 @@ def extract_nodes_and_edges(graph_df, add_ref=False):
         print('\r', end='')
         print('Done {} %, Node count: {}, Edge count: {}'.format(round((i / df_size) * 100, 2), len(node_set),
                                                                  len(moved_to_edges_set)), end='')
+        if max_edges and len(moved_to_edges_set) == max_edges:
+            break
         if add_ref:
             if row['prev_title'] not in reference_dict:
                 reference_dict[row['prev_title']] = set()
@@ -67,5 +70,5 @@ def write_to_csv(data, headers, csv_path):
 
 if __name__ == '__main__':
     path_to_tsv = r'C:\Users\Rom Cohen\PycharmProjects\NeedleInADataHayStack-finals\data\2015_01_clickstream.tsv'
-    create_graph_batch_csv(path_to_tsv, add_ref=False)
+    create_graph_batch_csv(path_to_tsv, max_edges=100000, add_ref=False)
 
