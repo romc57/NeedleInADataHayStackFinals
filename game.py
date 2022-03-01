@@ -1,7 +1,6 @@
-import networkx
 import random
 import pandas as pd
-import random
+import random, json, time, os
 import json
 import time
 import os
@@ -20,12 +19,15 @@ class LocalGraph:
     def __init__(self, graph_depth, df=None, root=None):
         self.graph_data_frame = df
         self.graph_depth = graph_depth
-        self.row_length = len(self.graph_data_frame.index)
+        if df:
+            self.row_length = len(self.graph_data_frame.index)
         self.root = root if root is not None else self.get_random_node()
         self.graph = None
         self.load_graph()
 
     def get_random_node(self):
+        if not self.graph_data_frame:
+            return False
         rand_root = None
         while rand_root is None or rand_root in FORBIDEN_WORDS:
             rand_root = self.graph_data_frame.iloc[random.randint(0, self.row_length)]['prev_title']
@@ -45,6 +47,12 @@ class LocalGraph:
         traveled_in.add(root)
         self.graph = {root: self.rec_load_local_graph(depth, root, traveled_in)}
         self.save_graph_to_json()
+
+    def load_random_json(self):
+        saved_files = glob.glob(os.path.join(JSON_PATH, '*'))
+        rand_index = random.randint(0, len(saved_files))
+        chosen_file = saved_files[rand_index]
+        self.load_graph_from_json(chosen_file.split('.')[0].split('/')[-1], self.graph_depth)
 
     def load_graph_from_json(self, root, depth):
         file_name = 'graph_{}_{}.json'.format(root, depth)
@@ -158,10 +166,11 @@ def load_json_from_tsv():
 
 
 if __name__ == '__main__':
-    # with open('data/local_graphs/graph_List_of_fossil_sites_3.json', 'r') as reader:
-    #     graph = json.loads(reader.read())
-    #     game = TheWikiGame(graph, 3)
-    #     print(game.get_random_path())
-    load_json_from_tsv()
+    local_graph = LocalGraph(3, root='Daffy_Duck')
+    graph = local_graph.get_graph()
+    print(graph)
+    game = TheWikiGame(graph, 3)
+    print(game.get_random_title())
+    print(game.get_random_path())
 
 
